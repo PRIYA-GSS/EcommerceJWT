@@ -1,0 +1,6 @@
+@EcommerceJWT_HostAddress = http://localhost:5203
+
+GET {{EcommerceJWT_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

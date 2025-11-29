@@ -16,7 +16,7 @@ namespace Models.Constants
         public const string LoginFailed = "Login has failed";
         public const string Failed = "Could not add the role";
         public const string Internal = "Internal Server Errror";
-
+        public const string InvalidToken = "You have given Invalid refresh token";
 
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using AutoMapper;
 using Interfaces.IManagers;
+using Interfaces.IRepository;
 using Microsoft.AspNetCore.Identity;
 using Models.Constants;
 using Models.DTOs;
@@ -16,13 +17,15 @@ namespace Managers
         private readonly RoleManager<IdentityRole> _rolemanager;
         private readonly IMapper _mapper;
         private readonly TokenHelper _token;
-        public AuthManager(UserManager<Entity.AppUser> usermanager, SignInManager<Entity.AppUser> signInmanager, RoleManager<IdentityRole> rolemanager, IMapper mapper, TokenHelper token)
+        private readonly IBaseRepository<Entity.RefreshToken> _refreshRepo;
+        public AuthManager(UserManager<Entity.AppUser> usermanager, SignInManager<Entity.AppUser> signInmanager, RoleManager<IdentityRole> rolemanager, IMapper mapper, TokenHelper token, IBaseRepository<Entity.RefreshToken> refreshRepo)
         {
             _usermanager = usermanager;
             _signInmanager = signInmanager;
             _rolemanager = rolemanager;
             _mapper = mapper;
             _token = token;
+            _refreshRepo = refreshRepo;
         }
         public async Task<Dto.Result<Dto.UserResponse>> RegisterUserAsync(Dto.Register dto)
         {
@@ -95,10 +98,18 @@ namespace Managers
                 var roleList = roles.ToList();
                 var userdto = _mapper.Map<Dto.AppUser>(user);
                 var token = _token.GenerateToken(userdto, roleList);
+
+                var refreshToken = _token.GenerateRefreshToken();
+                var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+                var refreshEntity = new Entity.RefreshToken { Token = refreshToken, UserId = user.Id, ExpiryDate = refreshTokenExpiry };
+                await _refreshRepo.AddAsync(refreshEntity);
+
                 var response = new AuthResponse
                 {
                     Role = role,
                     Token = token,
+                    RefreshToken=refreshToken,
+                    TokenExpiry= DateTime.UtcNow.AddMinutes(2),
                     Username = user.UserName
                 };
                 return new Result<AuthResponse>
@@ -118,11 +129,44 @@ namespace Managers
                 };
             }
         }
-        public async Task<Result> AssignRoleAsync(string userId, string role)
+        public async Task<Result<TokenResponse>> GetNewTokenAsync(string refreshToken)
+        {
+
+            var refreshTokens = await _refreshRepo.GetAllAsync();
+            var stored = refreshTokens.FirstOrDefault(t => t.Token == refreshToken);
+            if (stored == null || stored.IsRevoked || stored.ExpiryDate < DateTime.UtcNow)
+                return new Result<TokenResponse> { Success = false, Message = ErrorConstants.InvalidToken };
+
+            var user = await _usermanager.FindByIdAsync(stored.UserId);
+            var roles= await _usermanager.GetRolesAsync(user);
+            var userdto = _mapper.Map<AppUser>(user);
+            var newAccess = _token.GenerateToken(userdto, roles);
+            var newrefreshToken = _token.GenerateRefreshToken();
+            stored.IsRevoked = true;
+            await _refreshRepo.UpdateAsync(stored);
+            await _refreshRepo.AddAsync(new Entity.RefreshToken
+            {
+                Token = newrefreshToken,
+                UserId = user.Id,
+                ExpiryDate = DateTime.UtcNow.AddDays(7)
+            });
+            return new Result<TokenResponse>
+            {
+                Success = true,
+                Message = "Your new token",
+                Data = new TokenResponse
+                {
+                    Token = newAccess,
+                    RefreshToken = newrefreshToken,
+                }
+            };
+
+        }
+        public async Task<Result> AssignRoleAsync(string Username, string role)
         {
             try
             {
-                var user = await _usermanager.FindByIdAsync(userId);
+                var user = await _usermanager.FindByNameAsync(Username);
                 if (user == null)
                     return new Result { Success = false, Message = ErrorConstants.InValid };
                 if (!await _rolemanager.RoleExistsAsync(role))

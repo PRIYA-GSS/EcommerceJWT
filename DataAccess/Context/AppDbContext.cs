@@ -9,6 +9,7 @@ namespace DataAccess.Context
 
         public DbSet<Product> Products { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -19,7 +20,8 @@ namespace DataAccess.Context
             modelBuilder.Entity<Order>()
                 .HasOne(o=>o.AppUser)
                 .WithMany(a=>a.Orders)
-                .HasForeignKey(o=>o.UserId);
+                .HasForeignKey(o=>o.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Product>()
                 .Property(p => p.Price)

@@ -24,7 +24,15 @@ namespace Models.DTOs
     public class AuthResponse
     {
         public string Token { get; set; } = null!;
+        public string RefreshToken { get; set; }
+        public DateTime TokenExpiry { get; set; }
+       
         public string Username { get; set; } = null!;
         public string Role { get; set; } = null!;
+    }
+    public class TokenResponse
+    {
+        public string Token { get; set; }
+        public string RefreshToken { get; set; }
     }
 }

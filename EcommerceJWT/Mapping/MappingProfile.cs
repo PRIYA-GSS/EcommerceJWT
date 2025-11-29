@@ -12,11 +12,12 @@ namespace EcommerceJWT.Mapping
                 .ForMember(dest => dest.Products, opt => opt.MapFrom(src => src.Products.Select(p => p.Name)));
             CreateMap<OrderResponse,Entity. Order>();
             CreateMap<UserResponse, Entity.AppUser>().ReverseMap();
-            CreateMap<CreateOrder, Entity.Order>();
+            CreateMap<CreateOrder, Entity.Order>()
+                .ForMember(dest => dest.AppUser, opt => opt.Ignore());
             CreateMap<CreateProduct, Entity.Product>();
             CreateMap<ProductResponse,Entity. Product>().ReverseMap();
             CreateMap<UpdateUser, Entity.AppUser>();
-
+            CreateMap<Entity.AppUser, AppUser>();
         }
     }
 }

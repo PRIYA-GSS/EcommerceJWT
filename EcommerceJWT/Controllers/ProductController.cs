@@ -45,18 +45,18 @@ namespace EcommerceJWT.Controllers
 
      
         [HttpPost]
-        [Authorize(Roles = "Admin")] // Only Admin can add products
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> AddProduct([FromBody] CreateProduct dto)
         {
             var result = await _service.AddAsync(dto);
             return result.Success ? Ok(result) : BadRequest(result);
         }
 
-        [HttpPut]
+        [HttpPut("{id}")]
         [Authorize(Roles = "Admin")] 
-        public async Task<IActionResult> UpdateProduct([FromBody] CreateProduct dto)
+        public async Task<IActionResult> UpdateProduct(int id,[FromBody] CreateProduct dto)
         {
-            var result = await _service.UpdateAsync(dto);
+            var result = await _service.UpdateAsync(id,dto);
             return result.Success ? Ok(result) : BadRequest(result);
         }
 

@@ -20,7 +20,7 @@ namespace Services
         public async Task<Result<IList<ProductResponse>>> GetProductsByOrderId(int id) => await _manager.GetProductsByOrderId(id);
         public async Task<Result<ProductResponse>> GetProductById(int id)=>await _manager.GetProductById(id);
         public async Task<Result> AddAsync(CreateProduct product)=>await _manager.AddAsync(product);
-        public async Task<Result> UpdateAsync(CreateProduct product)=> await _manager.UpdateAsync(product);
+        public async Task<Result> UpdateAsync(int id,CreateProduct product)=> await _manager.UpdateAsync(id,product);
         public async Task<Result> DeleteAsync(int id)=> await _manager.DeleteAsync(id);
 
 

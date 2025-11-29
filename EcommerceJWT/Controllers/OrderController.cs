@@ -48,10 +48,10 @@ namespace EcommerceJWT.Controllers
         [Authorize(Roles = "Customer")] 
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrder dto)
         {
-            // ✅ Extract UserId from JWT instead of passing in DTO
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+           
+            //var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            dto.UserId = userId; // Assign logged-in user's ID to order
+            //dto.UserId = userId;
             var result = await _service.AddAsync(dto);
             return result.Success ? Ok(result) : BadRequest(result);
         }
@@ -68,9 +68,9 @@ namespace EcommerceJWT.Controllers
        
         [HttpPut]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateOrder([FromBody] CreateOrder dto)
+        public async Task<IActionResult> UpdateOrder(int id,[FromBody] CreateOrder dto)
         {
-            var result = await _service.UpdateAsync(dto);
+            var result = await _service.UpdateAsync(id,dto);
             return result.Success ? Ok(result) : BadRequest(result);
         }
 

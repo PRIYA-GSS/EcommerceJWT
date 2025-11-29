@@ -1,5 +1,4 @@
 
-
 using System.Text;
 using DataAccess.Context;
 using DataAccess.Entity;
@@ -15,8 +14,50 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Models.TokenHelper;
 using Services;
+using Serilog;
+using Serilog.Sinks.MSSqlServer;
+using System.Collections.ObjectModel;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+//logging to db
+
+
+var sinkOptions = new MSSqlServerSinkOptions
+{
+    TableName = "Logs",
+    AutoCreateSqlTable = true
+};
+
+var columnOptions = new ColumnOptions
+{
+    AdditionalColumns = new Collection<SqlColumn>
+    {
+        new SqlColumn("UserId", System.Data.SqlDbType.NVarChar),
+        new SqlColumn("Action", System.Data.SqlDbType.NVarChar)
+    }
+};
+
+
+
+
+//configure logging to file
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 10, shared: true)
+    .WriteTo.MSSqlServer(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
+        sinkOptions: sinkOptions,
+        columnOptions: columnOptions
+    )
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -69,7 +110,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

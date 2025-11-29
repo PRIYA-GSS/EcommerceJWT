@@ -14,7 +14,7 @@ namespace Interfaces.IManagers
         Task<Result<OrderResponse>> GetOrderById(int id);
         Task<Result> AddAsync(CreateOrder order);
         Task<Result> AddProductToOrder(int id, CreateProduct product);
-        Task<Result> UpdateAsync(CreateOrder order);
+        Task<Result> UpdateAsync(int id,CreateOrder order);
         Task<Result> DeleteAsync(int id);
     }
 }

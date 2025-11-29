@@ -6,20 +6,23 @@ using Models.Constants;
 using Models.DTOs;
 using Entity = DataAccess.Entity;
 using DataAccess.Context;
+using Microsoft.AspNetCore.Identity;
 namespace Managers
 {
     public class OrderManager : IOrderManager
     {
        
         private readonly IBaseRepository<Entity.Order> _orderrepo;
+        private readonly UserManager<Entity.AppUser> _usermanager;
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
-        public OrderManager(IBaseRepository<Entity.AppUser> userrepo, IMapper mapper, IBaseRepository<Entity.Order> orderrepo,AppDbContext context)
+        public OrderManager(IBaseRepository<Entity.AppUser> userrepo, IMapper mapper, IBaseRepository<Entity.Order> orderrepo,AppDbContext context, UserManager<Entity.AppUser> usermanager)
         {
 
             _orderrepo = orderrepo;
             _mapper = mapper;
             _context = context;
+            _usermanager=usermanager;
 
         }
         public async Task<Result<IList<OrderResponse>>> GetAllOrders()
@@ -127,9 +130,12 @@ namespace Managers
             };
 
         }
-        public async Task<Result> UpdateAsync(CreateOrder order)
+        public async Task<Result> UpdateAsync(int id,CreateOrder order)
         {
-            var update = await _orderrepo.GetByIdAsync(order.OrderId);
+
+            
+
+            var update = await _orderrepo.GetByIdAsync(id);
             if (update == null)
             {
                 return new Result
@@ -138,6 +144,16 @@ namespace Managers
                     Message = ErrorConstants.InValid
                 };
             }
+            var user = await _usermanager.FindByIdAsync(order.UserId);
+            if(user==null)
+            {
+                return new Result
+                {
+                    Success = false,
+                    Message = ErrorConstants.InValid
+                };
+            }
+            order.UserId = user.Id;
             _mapper.Map(order,update);
             await _orderrepo.UpdateAsync(update);
             return new Result

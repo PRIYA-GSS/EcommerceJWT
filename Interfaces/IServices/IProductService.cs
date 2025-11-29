@@ -13,7 +13,7 @@ namespace Interfaces.IServices
         Task<Result<IList<ProductResponse>>> GetProductsByOrderId(int id);
         Task<Result<ProductResponse>> GetProductById(int id);
         Task<Result> AddAsync(CreateProduct product);
-        Task<Result> UpdateAsync(CreateProduct product);
+        Task<Result> UpdateAsync(int id,CreateProduct product);
         Task<Result> DeleteAsync(int id);
     }
 }

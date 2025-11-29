@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 using Microsoft.Extensions.Configuration;
@@ -38,13 +39,20 @@ namespace Models.TokenHelper
             var token = new JwtSecurityToken(
                             issuer: _config["Jwt:Issuer"],
                             audience: _config["Jwt:Audience"],
-                            expires: DateTime.UtcNow.AddHours(2),
+                            expires: DateTime.UtcNow.AddMinutes(2),
                             claims: authClaims,
                             signingCredentials: creds
                         );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
 
+        }
+        public string GenerateRefreshToken()
+        {
+            var randomBytes = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+            return Convert.ToBase64String(randomBytes);
         }
     }
 }

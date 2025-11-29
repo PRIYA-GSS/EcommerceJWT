@@ -16,7 +16,7 @@ namespace Services
         public async Task<Result> AddAsync(CreateOrder order) => await _manager.AddAsync(order);
 
         public async Task<Result> AddProductToOrder(int id, CreateProduct product) => await _manager.AddProductToOrder(id, product);
-        public async Task<Result> UpdateAsync(CreateOrder order) => await _manager.UpdateAsync(order);
+        public async Task<Result> UpdateAsync(int id,CreateOrder order) => await _manager.UpdateAsync(id,order);
         public async Task<Result> DeleteAsync(int id) => await _manager.DeleteAsync(id);
 
     }

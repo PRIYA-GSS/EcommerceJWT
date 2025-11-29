@@ -108,9 +108,9 @@ namespace Managers
             };
 
         }
-        public async Task<Result> UpdateAsync(CreateProduct product)
+        public async Task<Result> UpdateAsync(int id,CreateProduct product)
         {
-            var update = await _repo.GetByIdAsync(product.ProductId);
+            var update = await _repo.GetByIdAsync(id);
             if (update == null)
             {
                 return new Result

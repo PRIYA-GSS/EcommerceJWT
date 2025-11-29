@@ -8,7 +8,7 @@ namespace Models.DTOs
 {
     public class CreateOrder
     {
-        public int OrderId { get; set; }
+       
         public DateTime Date { get; set; }
         public string UserId { get; set; }
 

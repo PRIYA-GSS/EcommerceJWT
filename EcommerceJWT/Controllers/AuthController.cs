@@ -30,12 +30,12 @@ namespace EcommerceJWT.Controllers
             if (result.Success)
             {
                 _logger.LogInformation("User {Email} registered successfully", dto.Email);
-                Ok(result);
+               return Ok(result);
             }
             
-                _logger.LogWarning("Registration failed for {Email}. Reason:{Message}", dto.Email, result.Message);
+           _logger.LogWarning("Registration failed for {Email}. Reason:{Message}", dto.Email, result.Message);
 
-                return BadRequest(result);
+           return BadRequest(result);
             
         }
         [HttpPost("login")]
@@ -53,7 +53,7 @@ namespace EcommerceJWT.Controllers
                 return Ok(result);
             }
 
-            _logger.LogWarning("Login failed for {Email}. Reason: {Message}", dto.Email, result.Message);
+           _logger.LogWarning("Login failed for {Email}. Reason: {Message}", dto.Email, result.Message);
             return Unauthorized(result);
 
         }

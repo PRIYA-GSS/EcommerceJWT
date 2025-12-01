@@ -1,22 +1,23 @@
 
-using System.Text;
+using System.Collections.ObjectModel;
 using DataAccess.Context;
 using DataAccess.Entity;
 using DataAccess.Repository;
+using Duende.IdentityServer.Models;
+
 using EcommerceJWT.Mapping;
 using Interfaces.IManagers;
 using Interfaces.IRepository;
 using Interfaces.IServices;
 using Managers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Models.TokenHelper;
-using Services;
 using Serilog;
 using Serilog.Sinks.MSSqlServer;
-using System.Collections.ObjectModel;
+using Services;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,39 +58,97 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
+// IDENTITY SERVER CONFIGURATION
 
+builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
+builder.Services.AddIdentityServer()
+    .AddInMemoryClients(new[]
+    {
+        new Client
+        {
+            ClientId = "myClient",
+            AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
+            ClientSecrets = new List<Secret>{new Secret("secret".Sha256()) } ,
+            AllowedScopes = { "myApi", "openid", "profile", "offline_access" },
+             AllowOfflineAccess = true
+        }
+    })
+    .AddAspNetIdentity<AppUser>()
+    .AddInMemoryApiScopes(new[]
+    {
+        new ApiScope("myApi", "My API", new[] { "role" })
+    })
+    .AddInMemoryIdentityResources(new IdentityResource[]
+    {
+        new IdentityResources.OpenId(),
+        new IdentityResources.Profile(),
+       new IdentityResource("roles", new[] { "role" })
+    })
+    .AddDeveloperSigningCredential(); // dev only
+
+
+//configure your api to trust server configuration
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = "https://localhost:7141"; // IdentityServer URL
+        options.Audience = "myApi"; // must match scope
+    });
+
+
+//integrate providers optional when UI is there
+builder.Services.AddAuthentication()
+    .AddGoogle("Google", options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    })
+    .AddOpenIdConnect("AzureAD", options =>
+    {
+        options.Authority = "https://login.microsoftonline.com/{tenantId}/v2.0";
+        options.ClientId = builder.Configuration["Authentication:AzureAd:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:AzureAd:ClientSecret"];
+        options.ResponseType = "code";
+        options.CallbackPath = "/signin-oidc";
+        options.SaveTokens = true;
+    });
+
+
+builder.Services.AddAuthorization();
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-var key = builder.Configuration["Jwt:Key"];
-var issuer = builder.Configuration["Jwt:Issuer"];
-var audience = builder.Configuration["Jwt:Audience"];
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = issuer,
-        ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-    };
-});
+
+
+//JWT AUTHENTICATION CONFIG
+//var key = builder.Configuration["Jwt:Key"];
+//var issuer = builder.Configuration["Jwt:Issuer"];
+//var audience = builder.Configuration["Jwt:Audience"];
+//builder.Services.AddAuthentication(options =>
+//{
+//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//}).AddJwtBearer(options =>
+//{
+//    options.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuer = true,
+//        ValidateAudience = true,
+//        ValidateLifetime = true,
+//        ValidateIssuerSigningKey = true,
+//        ValidIssuer = issuer,
+//        ValidAudience = audience,
+//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+//    };
+//});
 
 
 builder.Services.AddScoped<TokenHelper>();
@@ -112,6 +171,9 @@ if (app.Environment.IsDevelopment())
 }
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.UseIdentityServer();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

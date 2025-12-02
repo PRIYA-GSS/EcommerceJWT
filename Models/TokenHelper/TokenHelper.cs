@@ -2,8 +2,9 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Models.DTOs;
 
@@ -55,4 +56,5 @@ namespace Models.TokenHelper
             return Convert.ToBase64String(randomBytes);
         }
     }
+
 }

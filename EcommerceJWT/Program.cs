@@ -17,7 +17,7 @@ using Serilog;
 using Serilog.Sinks.MSSqlServer;
 using Services;
 
-
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,23 +57,30 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
+//DB
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// IDENTITY SERVER CONFIGURATION
+//IDENTITY DB
+builder.Services.AddIdentity<AppUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
-builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
+
+// IDENTITY SERVER CONFIGURATION ENTIRELY HERE
+
 builder.Services.AddIdentityServer()
+    .AddAspNetIdentity<AppUser>()
     .AddInMemoryClients(new[]
     {
         new Client
         {
             ClientId = "myClient",
             AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
-            ClientSecrets = new List<Secret>{new Secret("secret".Sha256()) } ,
-            AllowedScopes = { "myApi", "openid", "profile", "offline_access" },
+            ClientSecrets = {new Secret("secret".Sha256()) } ,
+            AllowedScopes = { "myApi", "openid", "profile", "offline_access","roles" },
              AllowOfflineAccess = true
         }
     })
-    .AddAspNetIdentity<AppUser>()
     .AddInMemoryApiScopes(new[]
     {
         new ApiScope("myApi", "My API", new[] { "role" })
@@ -91,34 +98,22 @@ builder.Services.AddIdentityServer()
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
-        options.Authority = "https://localhost:7141"; // IdentityServer URL
-        options.Audience = "myApi"; // must match scope
+        options.Authority = "https://localhost:7141"; 
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience=false,
+            RoleClaimType= "role"
+        };
     });
 
 
-//integrate providers optional when UI is there
-builder.Services.AddAuthentication()
-    .AddGoogle("Google", options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    })
-    .AddOpenIdConnect("AzureAD", options =>
-    {
-        options.Authority = "https://login.microsoftonline.com/{tenantId}/v2.0";
-        options.ClientId = builder.Configuration["Authentication:AzureAd:ClientId"];
-        options.ClientSecret = builder.Configuration["Authentication:AzureAd:ClientSecret"];
-        options.ResponseType = "code";
-        options.CallbackPath = "/signin-oidc";
-        options.SaveTokens = true;
-    });
+
 
 
 builder.Services.AddAuthorization();
 
 // Add services to the container.
-builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 
 builder.Services.AddControllers();
@@ -149,9 +144,10 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
 //    };
 //});
-
-
 builder.Services.AddScoped<TokenHelper>();
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+//builder.Services.AddScoped<IUserClaimsPrincipalFactory<AppUser>, AppClaimsFactory>();
 
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IAuthManager, AuthManager>();

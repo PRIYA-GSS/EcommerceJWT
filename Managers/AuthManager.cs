@@ -167,93 +167,94 @@ namespace Managers
         //    }
         //}
   
-       public async Task<Result<AuthResponse>> LoginUserAsync(Login dto)
-    {
-        try
-        {
-            // Find user by email
-            var user = await _usermanager.FindByEmailAsync(dto.Email);
-            if (user == null)
-            {
-                return new Result<AuthResponse>
-                {
-                    Success = false,
-                    Message = ErrorConstants.NotFound
-                };
-            }
+    //   public async Task<Result<AuthResponse>> LoginUserAsync(Login dto)
+    //{
+    //    try
+    //    {
+    //        // Find user by email
+    //        var user = await _usermanager.FindByEmailAsync(dto.Email);
+    //        if (user == null)
+    //        {
+    //            return new Result<AuthResponse>
+    //            {
+    //                Success = false,
+    //                Message = ErrorConstants.NotFound
+    //            };
+    //        }
 
-            // Check password
-            var signInResult = await _signInmanager.PasswordSignInAsync(user, dto.Password, false, false);
-            if (!signInResult.Succeeded)
-            {
-                return new Result<AuthResponse>
-                {
-                    Success = false,
-                    Message = ErrorConstants.LoginFailed
-                };
-            }
+    //        // Check password
+    //        var signInResult = await _signInmanager.PasswordSignInAsync(user, dto.Password, false, false);
+    //        if (!signInResult.Succeeded)
+    //        {
+    //            return new Result<AuthResponse>
+    //            {
+    //                Success = false,
+    //                Message = ErrorConstants.LoginFailed
+    //            };
+    //        }
 
-            // Request token from IdentityServer
-            using var client = new HttpClient();
+    //        // Request token from IdentityServer
+    //        using var client = new HttpClient();
 
-            var disco = await client.GetDiscoveryDocumentAsync("https://localhost:7141"); // IdentityServer URL
-            if (disco.IsError)
-            {
-                return new Result<AuthResponse>
-                {
-                    Success = false,
-                    Message = $"Discovery error: {disco.Error}"
-                };
-            }
+    //        var disco = await client.GetDiscoveryDocumentAsync("https://localhost:7141"); // IdentityServer URL
+    //        if (disco.IsError)
+    //        {
+    //            return new Result<AuthResponse>
+    //            {
+    //                Success = false,
+    //                Message = $"Discovery error: {disco.Error}"
+    //            };
+    //        }
 
-            var tokenResponse = await client.RequestPasswordTokenAsync(new PasswordTokenRequest
-            {
-                Address = disco.TokenEndpoint,
-                ClientId = "myClient",
-                ClientSecret = "secret",
-                UserName = dto.UserName,
-                Password = dto.Password,
-                Scope = "myApi openid profile offline_access"
-            });
+    //        var tokenResponse = await client.RequestPasswordTokenAsync(new PasswordTokenRequest
+    //        {
+    //            Address = disco.TokenEndpoint,
+    //            ClientId = "myClient",
+    //            ClientSecret = "secret",
+    //            UserName = dto.UserName,
+    //            Password = dto.Password,
+               
+    //            Scope = "myApi openid profile offline_access roles"
+    //        });
 
-            if (tokenResponse.IsError)
-            {
-                return new Result<AuthResponse>
-                {
-                    Success = false,
-                    Message = $"Token error: {tokenResponse.Error}"
-                };
-            }
+    //        if (tokenResponse.IsError)
+    //        {
+    //            return new Result<AuthResponse>
+    //            {
+    //                Success = false,
+    //                Message = $"Token error: {tokenResponse.Error}"
+    //            };
+    //        }
 
-            // Get user roles
-            var roles = await _usermanager.GetRolesAsync(user);
-            var role = roles.FirstOrDefault() ?? "User";
+    //        // Get user roles
+    //        var roles = await _usermanager.GetRolesAsync(user);
+    //        var role = roles.FirstOrDefault() ?? "User";
 
-            var response = new AuthResponse
-            {
-                Role = role,
-                Token = tokenResponse.AccessToken,
-                RefreshToken = tokenResponse.RefreshToken,
-                TokenExpiry = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
-                Username = user.UserName
-            };
+    //        var response = new AuthResponse
+    //        {
+    //            Role = role,
+    //            Token = tokenResponse.AccessToken,
+    //            RefreshToken = tokenResponse.RefreshToken,
+    //            TokenExpiry = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
+    //            Username = user.UserName
+    //        };
 
-            return new Result<AuthResponse>
-            {
-                Success = true,
-                Message = "Login Successful",
-                Data = response
-            };
-        }
-        catch (Exception ex)
-        {
-                return new Result<AuthResponse>
-                {
-                    Success = false,
-                    Message = ex.Message
-                };
-        }
-    }
+    //        return new Result<AuthResponse>
+    //        {
+    //            Success = true,
+    //            Message = "Login Successful",
+    //            Data = response
+    //        };
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //            return new Result<AuthResponse>
+    //            {
+    //                Success = false,
+    //                Message = ex.Message
+    //            };
+    //    }
+    //}
     //public async Task<Result<Dto.TokenResponse>> GetNewTokenAsync(string refreshToken)
     //    {
 
@@ -289,62 +290,62 @@ namespace Managers
     //    }
  
 
-public async Task<Result<Dto.TokenResponse>> GetNewTokenAsync(string refreshToken)
-    {
-        try
-        {
-            using var client = new HttpClient();
+//public async Task<Result<Dto.TokenResponse>> GetNewTokenAsync(string refreshToken)
+//    {
+//        try
+//        {
+//            using var client = new HttpClient();
 
-            // Discover endpoints from IdentityServer
-            var disco = await client.GetDiscoveryDocumentAsync("https://localhost:7141");
-            if (disco.IsError)
-            {
-                return new Result<Dto.TokenResponse>
-                {
-                    Success = false,
-                    Message = $"Discovery error: {disco.Error}"
-                };
-            }
+//            // Discover endpoints from IdentityServer
+//            var disco = await client.GetDiscoveryDocumentAsync("https://localhost:7141");
+//            if (disco.IsError)
+//            {
+//                return new Result<Dto.TokenResponse>
+//                {
+//                    Success = false,
+//                    Message = $"Discovery error: {disco.Error}"
+//                };
+//            }
 
-            // Request new tokens using the refresh token
-            var tokenResponse = await client.RequestRefreshTokenAsync(new RefreshTokenRequest
-            {
-                Address = disco.TokenEndpoint,
-                ClientId = "myClient",
-                ClientSecret = "secret",
-                RefreshToken = refreshToken
-            });
+//            // Request new tokens using the refresh token
+//            var tokenResponse = await client.RequestRefreshTokenAsync(new RefreshTokenRequest
+//            {
+//                Address = disco.TokenEndpoint,
+//                ClientId = "myClient",
+//                ClientSecret = "secret",
+//                RefreshToken = refreshToken
+//            });
 
-            if (tokenResponse.IsError)
-            {
-                return new Result<Dto.TokenResponse>
-                {
-                    Success = false,
-                    Message = $"Token error: {tokenResponse.Error}"
-                };
-            }
+//            if (tokenResponse.IsError)
+//            {
+//                return new Result<Dto.TokenResponse>
+//                {
+//                    Success = false,
+//                    Message = $"Token error: {tokenResponse.Error}"
+//                };
+//            }
 
-            return new Result<Dto.TokenResponse>
-            {
-                Success = true,
-                Message = "Your new token",
-                Data = new Dto.TokenResponse
-                {
-                    Token = tokenResponse.AccessToken,
-                    RefreshToken = tokenResponse.RefreshToken,
-                    //ExpiresIn = tokenResponse.ExpiresIn
-                }
-            };
-        }
-        catch (Exception ex)
-        {
-            return new Result<Dto.TokenResponse>
-            {
-                Success = false,
-                Message = ex.Message
-            };
-        }
-    }
+//            return new Result<Dto.TokenResponse>
+//            {
+//                Success = true,
+//                Message = "Your new token",
+//                Data = new Dto.TokenResponse
+//                {
+//                    Token = tokenResponse.AccessToken,
+//                    RefreshToken = tokenResponse.RefreshToken,
+//                    //ExpiresIn = tokenResponse.ExpiresIn
+//                }
+//            };
+//        }
+//        catch (Exception ex)
+//        {
+//            return new Result<Dto.TokenResponse>
+//            {
+//                Success = false,
+//                Message = ex.Message
+//            };
+//        }
+//    }
     public async Task<Result> AssignRoleAsync(string Username, string role)
         {
             try

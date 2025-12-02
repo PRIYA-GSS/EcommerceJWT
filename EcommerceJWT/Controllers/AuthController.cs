@@ -38,45 +38,45 @@ namespace EcommerceJWT.Controllers
            return BadRequest(result);
             
         }
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] Login dto)
-        {
+        //[HttpPost("login")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> Login([FromBody] Login dto)
+        //{
 
-            _logger.LogInformation("Login attempt for {Email}", dto.Email);
+        //    _logger.LogInformation("Login attempt for {Email}", dto.Email);
 
-            var result = await _service.LoginUserAsync(dto);
+        //    var result = await _service.LoginUserAsync(dto);
 
-            if(result.Success)
-            {
-                _logger.LogInformation("Login successful for {Email}", dto.Email);
-                return Ok(result);
-            }
+        //    if(result.Success)
+        //    {
+        //        _logger.LogInformation("Login successful for {Email}", dto.Email);
+        //        return Ok(result);
+        //    }
 
-           _logger.LogWarning("Login failed for {Email}. Reason: {Message}", dto.Email, result.Message);
-            return Unauthorized(result);
+        //   _logger.LogWarning("Login failed for {Email}. Reason: {Message}", dto.Email, result.Message);
+        //    return Unauthorized(result);
 
-        }
-        [HttpPost("refresh")]
-        public async Task<IActionResult> RefreshToken([FromBody]string refreshToken)
-        {
-           //var result= await _service.GetNewTokenAsync(refreshToken);
+        //}
+        //[HttpPost("refresh")]
+        //public async Task<IActionResult> RefreshToken([FromBody]string refreshToken)
+        //{
+        //   //var result= await _service.GetNewTokenAsync(refreshToken);
 
-            _logger.LogInformation("Refresh token request received");
+        //    _logger.LogInformation("Refresh token request received");
 
-            var result = await _service.GetNewTokenAsync(refreshToken);
+        //    var result = await _service.GetNewTokenAsync(refreshToken);
 
-            if (result.Success)
-            {
-                _logger.LogInformation("New token issued successfully for refresh token");
-                return Ok(result);
-            }
+        //    if (result.Success)
+        //    {
+        //        _logger.LogInformation("New token issued successfully for refresh token");
+        //        return Ok(result);
+        //    }
 
-            _logger.LogWarning("Invalid refresh token provided");
-            return Unauthorized(result);
+        //    _logger.LogWarning("Invalid refresh token provided");
+        //    return Unauthorized(result);
 
 
-        }
+        //}
         [HttpPost("assign-role")]
         [AllowAnonymous]
         public async Task<IActionResult> AssignRole(string username,string role)

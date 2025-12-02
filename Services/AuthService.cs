@@ -11,8 +11,8 @@ namespace Services
             _authmanager = authmanager;
         }
         public async Task<Result<UserResponse>> RegisterUserAsync(Register dto) => await _authmanager.RegisterUserAsync(dto);
-        public async Task<Result<AuthResponse>> LoginUserAsync(Login dto) => await _authmanager.LoginUserAsync(dto);
-        public async Task<Result<TokenResponse>> GetNewTokenAsync(string refreshToken)=> await _authmanager.GetNewTokenAsync(refreshToken);
+       // public async Task<Result<AuthResponse>> LoginUserAsync(Login dto) => await _authmanager.LoginUserAsync(dto);
+      //  public async Task<Result<TokenResponse>> GetNewTokenAsync(string refreshToken)=> await _authmanager.GetNewTokenAsync(refreshToken);
    
         public async Task<Result> AssignRoleAsync(string username, string role) => await _authmanager.AssignRoleAsync(username, role);
         public async Task<Result<UserResponse>> GetUserByIdAsync(string userId) => await _authmanager.GetUserByIdAsync(userId);
